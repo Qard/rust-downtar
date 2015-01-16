@@ -1,0 +1,10 @@
+[package]
+
+name = "downtar"
+version = "0.0.1"
+authors = ["Stephen Belanger <sbelanger@appneta.com>"]
+
+[dependencies]
+flate2 = "0.1.5"
+curl = "0.1.10"
+tar = "0.1.7"
