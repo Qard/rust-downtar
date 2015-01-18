@@ -3,8 +3,8 @@ extern crate flate2;
 extern crate curl;
 extern crate tar;
 
-use std::io::{fs, BufReader, File, SeekSet, IoResult};
 use self::flate2::reader::GzDecoder;
+use std::io::{BufReader, IoResult};
 use self::tar::Archive;
 use self::curl::http;
 
@@ -15,33 +15,22 @@ pub enum DowntarError {
 
 fn untar_stream (stream: BufReader, dest: &Path) -> IoResult<()> {
   let mut gzipped = GzDecoder::new(stream);
-
-  let tmp_folder = Path::new("./tmp");
-
-  let untar = try!(Archive::new(gzipped).unpack(&tmp_folder));
-  let temp_contents = try!(fs::readdir(&tmp_folder));
-
-  let first = temp_contents.iter().next().unwrap();
-  println!("first: {:?}, dest: {:?}", first, dest);
-  // fs::rename(first, dest);
-
+  let untar = try!(Archive::new(gzipped).unpack(dest));
   Ok(())
 }
 
-pub fn download (url: String, dest: String) -> Result<Path, DowntarError> {
-  let dest_path = Path::new(dest.as_slice());
-
+pub fn download (url: String, dest: Path) -> Result<(), DowntarError> {
   let res = match http::handle().get(url).exec() {
     Ok(body) => body,
     Err(_) => return Err(DowntarError::HttpError)
   };
 
-  match untar_stream(BufReader::new(res.get_body()), &dest_path) {
+  match untar_stream(BufReader::new(res.get_body()), &dest) {
     Ok(_) => {},
     Err(_) => return Err(DowntarError::UntarError)
   };
 
-  Ok(dest_path)
+  Ok(())
 }
 
 #[cfg(test)]
